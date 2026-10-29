@@ -1,13 +1,13 @@
 import random
 import sys
-from pathlib import Path                           # (NEW)
+from pathlib import Path
 
 import pygame
 
-BEST_FILE = Path(__file__).with_name("best_score.txt")   # (NEW) file-er jaygay
+BEST_FILE = Path(__file__).with_name("best_score.txt")
 
 
-def load_best():                                   # (NEW)
+def load_best():
     """Read the best score from a file (0 if there is no file yet)."""
     try:
         return int(BEST_FILE.read_text())
@@ -15,7 +15,7 @@ def load_best():                                   # (NEW)
         return 0
 
 
-def save_best(value):                              # (NEW)
+def save_best(value):
     """Write the best score to a file."""
     BEST_FILE.write_text(str(value))
 
@@ -29,10 +29,12 @@ big_font = pygame.font.SysFont(None, 64)
 
 player = pygame.Rect(215, 630, 50, 50)
 blocks = []
+coins = []                                        # (NEW)
 timer = 0
+coin_timer = 0                                    # (NEW)
 score = 0
 lives = 3
-best = load_best()                                 # (NEW) ager `best = 0` er jaygay
+best = load_best()
 hit_timer = 0
 game_over = False
 
@@ -45,7 +47,9 @@ while True:
             event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE)
         if game_over and wants_restart:
             blocks = []
+            coins = []                            # (NEW)
             timer = 0
+            coin_timer = 0                        # (NEW)
             score = 0
             lives = 3
             hit_timer = 0
@@ -68,6 +72,12 @@ while True:
             x = random.randint(0, 480 - size)
             blocks.append(pygame.Rect(x, -size, size, size))
 
+        coin_timer += 1                                   # (NEW)
+        if coin_timer >= 150:                             # (NEW) 2.5 second-e ekta
+            coin_timer = 0                                # (NEW)
+            coin_x = random.randint(0, 452)               # (NEW)
+            coins.append(pygame.Rect(coin_x, -28, 28, 28))   # (NEW)
+
         if hit_timer > 0:
             hit_timer -= 1
 
@@ -80,18 +90,28 @@ while True:
                 hit_timer = 60
                 if lives <= 0:
                     game_over = True
-                    if score > best:               # (NEW) ager `best = max(...)` er jaygay
-                        best = score               # (NEW)
-                        save_best(best)            # (NEW)
+                    if score > best:
+                        best = score
+                        save_best(best)
                     break
             elif block.top > 720:
                 blocks.remove(block)
                 score += 1
 
+        for coin in coins[:]:                             # (NEW)
+            coin.y += speed                               # (NEW)
+            if coin.colliderect(player):                  # (NEW)
+                coins.remove(coin)                        # (NEW)
+                score += 5                                # (NEW)
+            elif coin.top > 720:                          # (NEW)
+                coins.remove(coin)                        # (NEW)
+
     if hit_timer > 50:
         screen.fill((110, 20, 30))
     else:
         screen.fill((20, 24, 40))
+    for coin in coins:                                    # (NEW)
+        pygame.draw.ellipse(screen, (255, 210, 0), coin)  # (NEW)
     if hit_timer == 0 or hit_timer % 10 < 5:
         pygame.draw.rect(screen, (80, 220, 140), player)
     for block in blocks:
