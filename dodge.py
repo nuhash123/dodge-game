@@ -1,6 +1,24 @@
 import random
 import sys
+from pathlib import Path                           # (NEW)
+
 import pygame
+
+BEST_FILE = Path(__file__).with_name("best_score.txt")   # (NEW) file-er jaygay
+
+
+def load_best():                                   # (NEW)
+    """Read the best score from a file (0 if there is no file yet)."""
+    try:
+        return int(BEST_FILE.read_text())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_best(value):                              # (NEW)
+    """Write the best score to a file."""
+    BEST_FILE.write_text(str(value))
+
 
 pygame.init()
 screen = pygame.display.set_mode((480, 720))
@@ -14,7 +32,7 @@ blocks = []
 timer = 0
 score = 0
 lives = 3
-best = 0
+best = load_best()                                 # (NEW) ager `best = 0` er jaygay
 hit_timer = 0
 game_over = False
 
@@ -62,7 +80,9 @@ while True:
                 hit_timer = 60
                 if lives <= 0:
                     game_over = True
-                    best = max(best, score)
+                    if score > best:               # (NEW) ager `best = max(...)` er jaygay
+                        best = score               # (NEW)
+                        save_best(best)            # (NEW)
                     break
             elif block.top > 720:
                 blocks.remove(block)
